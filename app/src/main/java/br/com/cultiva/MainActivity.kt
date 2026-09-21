@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -92,7 +95,7 @@ private fun CultivaApp() {
     }
 
     MaterialTheme {
-        Surface(Modifier.fillMaxSize(), color = Paper) {
+        Surface(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.navigationBars), color = Paper) {
             when (screen) {
                 Screen.Login -> LoginScreen { screen = Screen.Orders }
                 Screen.Orders -> OrdersScreen(
@@ -173,12 +176,17 @@ private fun LoginScreen(onLogin: () -> Unit) {
 @Composable
 private fun AppHeader(title: String, back: (() -> Unit)? = null) {
     Row(
-        Modifier.fillMaxWidth().height(26.dp).background(Color.White).border(1.dp, Color.LightGray),
+        Modifier.fillMaxWidth().height(48.dp).background(Color.White).border(1.dp, Color.LightGray),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (back != null) Text("‹", color = Green, fontSize = 20.sp, modifier = Modifier.padding(start = 8.dp, end = 15.dp).clickable { back() })
+        if (back != null) {
+            Box(
+                modifier = Modifier.size(48.dp).clickable { back() },
+                contentAlignment = Alignment.Center
+            ) { Text("‹", color = Green, fontSize = 32.sp) }
+        }
         Text(title, color = Green, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-        if (back != null) Spacer(Modifier.width(24.dp))
+        if (back != null) Spacer(Modifier.width(48.dp))
     }
 }
 
@@ -235,10 +243,10 @@ private fun DetailScreen(order: Order, onBack: () -> Unit, onHistory: () -> Unit
                 Column { Text("EXTENSÃO", fontSize = 5.sp); Text(order.extension, fontSize = 8.sp, fontWeight = FontWeight.Bold) }
                 Column(horizontalAlignment = Alignment.End) { Text("${order.status}", color = Color.White, fontSize = 7.sp, modifier = Modifier.background(order.color).padding(4.dp, 2.dp)); Text(if (order.attended) "Em andamento" else "", fontSize = 7.sp) }
             }
-            InfoBox("TIPO DE ROÇADA", "Apenas manual", Modifier.fillMaxWidth().height(39.dp))
-            Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(26.dp)) {
-                InfoBox("EXTENSÃO", "500m", Modifier.weight(1f).height(48.dp))
-                InfoBox("LADO", "NORTE", Modifier.weight(1f).height(48.dp))
+            InfoBox("TIPO DE ROÇADA", "Apenas manual", Modifier.fillMaxWidth().height(72.dp))
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                InfoBox("EXTENSÃO", "500m", Modifier.weight(1f).height(72.dp))
+                InfoBox("LADO", "NORTE", Modifier.weight(1f).height(72.dp))
             }
             if (order.hasEvidence) RoadPreview() else UploadBox(onClick = onEvidence)
             Button(onClick = {
@@ -256,7 +264,10 @@ private fun DetailScreen(order: Order, onBack: () -> Unit, onHistory: () -> Unit
 
 @Composable
 private fun InfoBox(label: String, value: String, modifier: Modifier) {
-    Column(modifier.border(1.dp, Border).padding(4.dp), verticalArrangement = Arrangement.Center) { Text(label, fontSize = 6.sp); Text(value, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+    Column(modifier.border(1.dp, Border).padding(8.dp), verticalArrangement = Arrangement.Center) {
+        Text(label, fontSize = 7.sp, color = Color.DarkGray, maxLines = 1)
+        Text(value, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+    }
 }
 
 @Composable
