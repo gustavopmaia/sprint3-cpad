@@ -132,32 +132,36 @@ private fun LoginScreen(onLogin: () -> Unit) {
         Text("E-mail", fontSize = 7.sp, color = Color.DarkGray)
         OutlinedTextField(
             value = email, onValueChange = { email = it }, singleLine = true,
-            modifier = Modifier.fillMaxWidth().height(34.dp), textStyle = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.fillMaxWidth().height(48.dp), textStyle = MaterialTheme.typography.bodySmall.copy(color = Color.Black),
             shape = RoundedCornerShape(4.dp),
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
-                cursorColor = Green
+                cursorColor = Green,
+                focusedIndicatorColor = Color(0xFF168BF0),
+                unfocusedIndicatorColor = Border
             )
         )
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(8.dp))
         Text("Senha", fontSize = 7.sp, color = Color.DarkGray)
         OutlinedTextField(
             value = password, onValueChange = { password = it }, singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth().height(34.dp), textStyle = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.fillMaxWidth().height(48.dp), textStyle = MaterialTheme.typography.bodySmall.copy(color = Color.Black),
             shape = RoundedCornerShape(4.dp),
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
-                cursorColor = Green
+                cursorColor = Green,
+                focusedIndicatorColor = Color(0xFF168BF0),
+                unfocusedIndicatorColor = Border
             )
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(14.dp))
         Button(
             onClick = onLogin, modifier = Modifier.fillMaxWidth().height(32.dp),
             shape = RoundedCornerShape(4.dp), contentPadding = ButtonDefaults.ContentPadding,
