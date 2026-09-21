@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -59,18 +60,21 @@ private data class Order(
     val color: Color,
     val extension: String,
     val type: String,
-    val attended: Boolean
+    val attended: Boolean,
+    val completed: Boolean = false,
+    val hasEvidence: Boolean = false
 )
 
 private val orders = listOf(
     Order("CRÍTICO", Color(0xFFE95A61), "km 4 - 4.5", "Apenas manual", false),
-    Order("URGENTE", Color(0xFFF1B633), "km 5 - 5.5", "Mecanizado", true),
+    Order("URGENTE", Color(0xFFF1B633), "km 5 - 5.5", "Mecanizado", true, hasEvidence = true),
     Order("ALERTA", Color(0xFFE1D34F), "km 6 - 6.5", "Apenas manual", false)
 )
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true)
         setContent { CultivaApp() }
     }
 }
@@ -79,6 +83,12 @@ class MainActivity : ComponentActivity() {
 private fun CultivaApp() {
     var screen by remember { mutableStateOf(Screen.Login) }
     var selectedOrder by remember { mutableStateOf(orders[0]) }
+    var orderState by remember { mutableStateOf(orders) }
+
+    fun updateOrder(updated: Order) {
+        orderState = orderState.map { if (it.extension == updated.extension) updated else it }
+        selectedOrder = updated
+    }
 
     MaterialTheme {
         Surface(Modifier.fillMaxSize().background(Dark), color = Dark) {
@@ -90,15 +100,20 @@ private fun CultivaApp() {
                     when (screen) {
                         Screen.Login -> LoginScreen { screen = Screen.Orders }
                         Screen.Orders -> OrdersScreen(
+                            orders = orderState,
                             onOrder = { order -> selectedOrder = order; screen = Screen.Detail },
                             onHistory = { screen = Screen.History }
                         )
                         Screen.Detail -> DetailScreen(
                             order = selectedOrder,
                             onBack = { screen = Screen.Orders },
-                            onHistory = { screen = Screen.History }
+                            onHistory = { screen = Screen.History },
+                            onEvidence = { updateOrder(selectedOrder.copy(hasEvidence = true, attended = true)) },
+                            onStart = { updateOrder(selectedOrder.copy(attended = true)) },
+                            onFinish = { updateOrder(selectedOrder.copy(attended = false, completed = true)) }
                         )
                         Screen.History -> HistoryScreen(
+                            orders = orderState,
                             onOrders = { screen = Screen.Orders }
                         )
                     }
@@ -173,7 +188,7 @@ private fun BottomItem(icon: String, label: String, active: Boolean, onClick: ()
 }
 
 @Composable
-private fun OrdersScreen(onOrder: (Order) -> Unit, onHistory: () -> Unit) {
+private fun OrdersScreen(orders: List<Order>, onOrder: (Order) -> Unit, onHistory: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         Text("Lista de ordens", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.background(Dark).fillMaxWidth().padding(8.dp, 11.dp))
         AppHeader("Lista de Ordens")
@@ -201,7 +216,8 @@ private fun OrderCard(order: Order, onClick: () -> Unit) {
 }
 
 @Composable
-private fun DetailScreen(order: Order, onBack: () -> Unit, onHistory: () -> Unit) {
+private fun DetailScreen(order: Order, onBack: () -> Unit, onHistory: () -> Unit, onEvidence: () -> Unit, onStart: () -> Unit, onFinish: () -> Unit) {
+    val context = LocalContext.current
     Column(Modifier.fillMaxSize()) {
         AppHeader("Detalhe da ordem", onBack)
         Column(Modifier.weight(1f).padding(7.dp)) {
@@ -214,10 +230,15 @@ private fun DetailScreen(order: Order, onBack: () -> Unit, onHistory: () -> Unit
                 InfoBox("EXTENSÃO", "500m", Modifier.weight(1f).height(48.dp))
                 InfoBox("LADO", "NORTE", Modifier.weight(1f).height(48.dp))
             }
-            if (order.attended) RoadPreview() else UploadBox()
-            Button(onClick = {}, modifier = Modifier.fillMaxWidth().height(32.dp), shape = RoundedCornerShape(2.dp), colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text("Abrir no Maps", fontSize = 10.sp, fontWeight = FontWeight.Bold) }
+            if (order.hasEvidence) RoadPreview() else UploadBox(onClick = onEvidence)
+            Button(onClick = {
+                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("geo:0,0?q=Rodovia+SP-021"))
+                if (intent.resolveActivity(context.packageManager) != null) {
+                    context.startActivity(intent)
+                }
+            }, modifier = Modifier.fillMaxWidth().height(32.dp), shape = RoundedCornerShape(2.dp), colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text("Abrir no Maps", fontSize = 10.sp, fontWeight = FontWeight.Bold) }
             Spacer(Modifier.height(5.dp))
-            OutlinedButton(onClick = {}, modifier = Modifier.fillMaxWidth().height(32.dp), shape = RoundedCornerShape(2.dp), contentPadding = ButtonDefaults.ContentPadding) { Text(if (order.attended) "Finalizar atendimento" else "Iniciar atendimento", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Black) }
+            OutlinedButton(onClick = if (order.attended) onFinish else onStart, modifier = Modifier.fillMaxWidth().height(32.dp), shape = RoundedCornerShape(2.dp), contentPadding = ButtonDefaults.ContentPadding) { Text(if (order.attended) "Finalizar atendimento" else "Iniciar atendimento", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Black) }
         }
         BottomBar(Screen.Orders, onOrders = onBack, onHistory = onHistory)
     }
@@ -229,8 +250,8 @@ private fun InfoBox(label: String, value: String, modifier: Modifier) {
 }
 
 @Composable
-private fun UploadBox() {
-    Box(Modifier.fillMaxWidth().height(69.dp).padding(horizontal = 26.dp, vertical = 12.dp).border(1.dp, Green), contentAlignment = Alignment.Center) { Text("FAZER UPLOAD", fontSize = 7.sp, fontWeight = FontWeight.Bold) }
+private fun UploadBox(onClick: () -> Unit) {
+    Box(Modifier.fillMaxWidth().height(69.dp).padding(horizontal = 26.dp, vertical = 12.dp).border(1.dp, Green).clickable { onClick() }, contentAlignment = Alignment.Center) { Text("FAZER UPLOAD", fontSize = 7.sp, fontWeight = FontWeight.Bold) }
 }
 
 @Composable
@@ -246,12 +267,12 @@ private fun RoadPreview() {
 }
 
 @Composable
-private fun HistoryScreen(onOrders: () -> Unit) {
+private fun HistoryScreen(orders: List<Order>, onOrders: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         Text("Histórico", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.background(Dark).fillMaxWidth().padding(8.dp, 11.dp))
         AppHeader("Histórico")
         Column(Modifier.weight(1f).padding(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            orders.map { it.copy(attended = true) }.forEach { order ->
+            orders.forEach { order ->
                 Column(Modifier.fillMaxWidth().height(62.dp).border(1.dp, Border).padding(4.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Column { Text("RODOVIA", fontSize = 7.sp); Text("SP-021", fontSize = 12.sp, fontWeight = FontWeight.Bold) }; Text("FEITO", color = Color.White, fontSize = 7.sp, modifier = Modifier.background(Green).padding(horizontal = 10.dp, vertical = 2.dp)) }
                     Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) { Column { Text("EXTENSÃO", fontSize = 5.sp); Text(order.extension, fontSize = 7.sp, fontWeight = FontWeight.Bold) }; Column(horizontalAlignment = Alignment.End) { Text("TIPO", fontSize = 5.sp); Text(order.type, fontSize = 7.sp, fontWeight = FontWeight.Bold) } }
