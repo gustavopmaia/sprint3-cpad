@@ -28,6 +28,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -91,35 +92,28 @@ private fun CultivaApp() {
     }
 
     MaterialTheme {
-        Surface(Modifier.fillMaxSize().background(Dark), color = Dark) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Surface(
-                    modifier = Modifier.width(300.dp).fillMaxHeight(),
-                    color = Paper
-                ) {
-                    when (screen) {
-                        Screen.Login -> LoginScreen { screen = Screen.Orders }
-                        Screen.Orders -> OrdersScreen(
-                            orders = orderState,
-                            onOrder = { order -> selectedOrder = order; screen = Screen.Detail },
-                            onHistory = { screen = Screen.History }
-                        )
-                        Screen.Detail -> DetailScreen(
-                            order = selectedOrder,
-                            onBack = { screen = Screen.Orders },
-                            onHistory = { screen = Screen.History },
-                            onEvidence = { updateOrder(selectedOrder.copy(hasEvidence = true, attended = true)) },
-                            onStart = { updateOrder(selectedOrder.copy(attended = true)) },
-                            onFinish = { updateOrder(selectedOrder.copy(attended = false, completed = true)) }
-                        )
-                        Screen.History -> HistoryScreen(
-                            orders = orderState,
-                            onOrders = { screen = Screen.Orders }
-                        )
-                    }
+        Surface(Modifier.fillMaxSize(), color = Paper) {
+            when (screen) {
+                Screen.Login -> LoginScreen { screen = Screen.Orders }
+                Screen.Orders -> OrdersScreen(
+                    orders = orderState,
+                    onOrder = { order -> selectedOrder = order; screen = Screen.Detail },
+                    onHistory = { screen = Screen.History }
+                )
+                Screen.Detail -> DetailScreen(
+                    order = selectedOrder,
+                    onBack = { screen = Screen.Orders },
+                    onHistory = { screen = Screen.History },
+                    onEvidence = { updateOrder(selectedOrder.copy(hasEvidence = true, attended = true)) },
+                    onStart = { updateOrder(selectedOrder.copy(attended = true)) },
+                    onFinish = { updateOrder(selectedOrder.copy(attended = false, completed = true)) }
+                )
+                Screen.History -> HistoryScreen(
+                    orders = orderState,
+                    onOrders = { screen = Screen.Orders }
+                )
                 }
             }
-        }
     }
 }
 
@@ -128,7 +122,6 @@ private fun LoginScreen(onLogin: () -> Unit) {
     var email by remember { mutableStateOf("email@teste.com") }
     var password by remember { mutableStateOf("123456789012") }
     Column(Modifier.fillMaxSize().padding(horizontal = 17.dp), verticalArrangement = Arrangement.Center) {
-        Text("Login", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
                 Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)).background(Green),
@@ -140,7 +133,14 @@ private fun LoginScreen(onLogin: () -> Unit) {
         OutlinedTextField(
             value = email, onValueChange = { email = it }, singleLine = true,
             modifier = Modifier.fillMaxWidth().height(34.dp), textStyle = MaterialTheme.typography.bodySmall,
-            shape = RoundedCornerShape(4.dp)
+            shape = RoundedCornerShape(4.dp),
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black,
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                cursorColor = Green
+            )
         )
         Spacer(Modifier.height(10.dp))
         Text("Senha", fontSize = 7.sp, color = Color.DarkGray)
@@ -148,7 +148,14 @@ private fun LoginScreen(onLogin: () -> Unit) {
             value = password, onValueChange = { password = it }, singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth().height(34.dp), textStyle = MaterialTheme.typography.bodySmall,
-            shape = RoundedCornerShape(4.dp)
+            shape = RoundedCornerShape(4.dp),
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black,
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                cursorColor = Green
+            )
         )
         Spacer(Modifier.height(16.dp))
         Button(
@@ -190,7 +197,6 @@ private fun BottomItem(icon: String, label: String, active: Boolean, onClick: ()
 @Composable
 private fun OrdersScreen(orders: List<Order>, onOrder: (Order) -> Unit, onHistory: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
-        Text("Lista de ordens", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.background(Dark).fillMaxWidth().padding(8.dp, 11.dp))
         AppHeader("Lista de Ordens")
         Column(Modifier.weight(1f).padding(horizontal = 10.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             orders.forEach { order -> OrderCard(order, onClick = { onOrder(order) }) }
@@ -269,7 +275,6 @@ private fun RoadPreview() {
 @Composable
 private fun HistoryScreen(orders: List<Order>, onOrders: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
-        Text("Histórico", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.background(Dark).fillMaxWidth().padding(8.dp, 11.dp))
         AppHeader("Histórico")
         Column(Modifier.weight(1f).padding(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             orders.forEach { order ->
