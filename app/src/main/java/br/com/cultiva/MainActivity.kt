@@ -3,302 +3,31 @@ package br.com.cultiva
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-
-private val Green = Color(0xFF2B6733)
-private val Dark = Color(0xFF1E1E1E)
-private val Paper = Color(0xFFF5F5F5)
-private val Border = Color(0xFF555555)
-
-private enum class Screen { Login, Orders, Detail, History }
-
-private data class Order(
-    val status: String,
-    val color: Color,
-    val extension: String,
-    val type: String,
-    val attended: Boolean,
-    val completed: Boolean = false,
-    val hasEvidence: Boolean = false
-)
-
-private val orders = listOf(
-    Order("CRÍTICO", Color(0xFFE95A61), "km 4 - 4.5", "Apenas manual", false),
-    Order("URGENTE", Color(0xFFF1B633), "km 5 - 5.5", "Mecanizado", true, hasEvidence = true),
-    Order("ALERTA", Color(0xFFE1D34F), "km 6 - 6.5", "Apenas manual", false)
-)
+import androidx.core.view.WindowCompat
+import br.com.cultiva.navigation.CultivaNavGraph
+import br.com.cultiva.ui.theme.Paper
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true)
-        setContent { CultivaApp() }
-    }
-}
-
-@Composable
-private fun CultivaApp() {
-    var screen by remember { mutableStateOf(Screen.Login) }
-    var selectedOrder by remember { mutableStateOf(orders[0]) }
-    var orderState by remember { mutableStateOf(orders) }
-
-    fun updateOrder(updated: Order) {
-        orderState = orderState.map { if (it.extension == updated.extension) updated else it }
-        selectedOrder = updated
-    }
-
-    MaterialTheme {
-        Surface(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.navigationBars), color = Paper) {
-            when (screen) {
-                Screen.Login -> LoginScreen { screen = Screen.Orders }
-                Screen.Orders -> OrdersScreen(
-                    orders = orderState,
-                    onOrder = { order -> selectedOrder = order; screen = Screen.Detail },
-                    onHistory = { screen = Screen.History }
-                )
-                Screen.Detail -> DetailScreen(
-                    order = selectedOrder,
-                    onBack = { screen = Screen.Orders },
-                    onHistory = { screen = Screen.History },
-                    onEvidence = { updateOrder(selectedOrder.copy(hasEvidence = true, attended = true)) },
-                    onStart = { updateOrder(selectedOrder.copy(attended = true)) },
-                    onFinish = { updateOrder(selectedOrder.copy(attended = false, completed = true)) }
-                )
-                Screen.History -> HistoryScreen(
-                    orders = orderState,
-                    onOrders = { screen = Screen.Orders }
-                )
-                }
-            }
-    }
-}
-
-@Composable
-private fun LoginScreen(onLogin: () -> Unit) {
-    var email by remember { mutableStateOf("email@teste.com") }
-    var password by remember { mutableStateOf("123456789012") }
-    Column(Modifier.fillMaxSize().padding(horizontal = 17.dp), verticalArrangement = Arrangement.Center) {
-        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)).background(Green),
-                contentAlignment = Alignment.Center
-            ) { Text("✂", color = Color.White, fontSize = 29.sp) }
-            Text("Cultiva", color = Green, fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp, bottom = 8.dp))
-        }
-        Text("E-mail", fontSize = 7.sp, color = Color.DarkGray)
-        OutlinedTextField(
-            value = email, onValueChange = { email = it }, singleLine = true,
-            modifier = Modifier.fillMaxWidth().height(48.dp), textStyle = MaterialTheme.typography.bodySmall.copy(color = Color.Black),
-            shape = RoundedCornerShape(4.dp),
-            colors = TextFieldDefaults.colors(
-                focusedTextColor = Color.Black,
-                unfocusedTextColor = Color.Black,
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                cursorColor = Green,
-                focusedIndicatorColor = Color(0xFF168BF0),
-                unfocusedIndicatorColor = Border
-            )
-        )
-        Spacer(Modifier.height(8.dp))
-        Text("Senha", fontSize = 7.sp, color = Color.DarkGray)
-        OutlinedTextField(
-            value = password, onValueChange = { password = it }, singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth().height(48.dp), textStyle = MaterialTheme.typography.bodySmall.copy(color = Color.Black),
-            shape = RoundedCornerShape(4.dp),
-            colors = TextFieldDefaults.colors(
-                focusedTextColor = Color.Black,
-                unfocusedTextColor = Color.Black,
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                cursorColor = Green,
-                focusedIndicatorColor = Color(0xFF168BF0),
-                unfocusedIndicatorColor = Border
-            )
-        )
-        Spacer(Modifier.height(14.dp))
-        Button(
-            onClick = onLogin, modifier = Modifier.fillMaxWidth().height(32.dp),
-            shape = RoundedCornerShape(4.dp), contentPadding = ButtonDefaults.ContentPadding,
-            colors = ButtonDefaults.buttonColors(containerColor = Green)
-        ) { Text("Entrar", fontSize = 10.sp, fontWeight = FontWeight.Bold) }
-    }
-}
-
-@Composable
-private fun AppHeader(title: String, back: (() -> Unit)? = null) {
-    Row(
-        Modifier.fillMaxWidth().height(48.dp).background(Color.White).border(1.dp, Color.LightGray),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (back != null) {
-            Box(
-                modifier = Modifier.size(48.dp).clickable { back() },
-                contentAlignment = Alignment.Center
-            ) { Text("‹", color = Green, fontSize = 32.sp) }
-        }
-        Text(title, color = Green, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-        if (back != null) Spacer(Modifier.width(48.dp))
-    }
-}
-
-@Composable
-private fun BottomBar(selected: Screen, onOrders: () -> Unit, onHistory: () -> Unit) {
-    Row(Modifier.fillMaxWidth().height(34.dp).background(Color.White).border(1.dp, Color.LightGray), horizontalArrangement = Arrangement.SpaceEvenly) {
-        BottomItem("▤", "Ordens", selected == Screen.Orders, onOrders)
-        BottomItem("▣", "Histórico", selected == Screen.History, onHistory)
-    }
-}
-
-@Composable
-private fun BottomItem(icon: String, label: String, active: Boolean, onClick: () -> Unit) {
-    Column(Modifier.width(54.dp).fillMaxHeight().clickable { onClick() }.background(if (active) Green else Color.White), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Text(icon, color = if (active) Color.White else Color.DarkGray, fontSize = 14.sp)
-        Text(label, color = if (active) Color.White else Color.DarkGray, fontSize = 6.sp)
-    }
-}
-
-@Composable
-private fun OrdersScreen(orders: List<Order>, onOrder: (Order) -> Unit, onHistory: () -> Unit) {
-    Column(Modifier.fillMaxSize()) {
-        AppHeader("Lista de Ordens")
-        Column(Modifier.weight(1f).padding(horizontal = 10.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            orders.forEach { order -> OrderCard(order, onClick = { onOrder(order) }) }
-        }
-        BottomBar(Screen.Orders, onOrders = {}, onHistory = onHistory)
-    }
-}
-
-@Composable
-private fun OrderCard(order: Order, onClick: () -> Unit) {
-    Column(Modifier.fillMaxWidth().height(80.dp).border(1.dp, Border).padding(4.dp).clickable { onClick() }) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) { Text("RODOVIA", fontSize = 7.sp); Text("SP-021", fontSize = 12.sp, fontWeight = FontWeight.Bold) }
-            Text("◉ ${order.status}", color = Color.White, fontSize = 7.sp, modifier = Modifier.background(order.color).padding(horizontal = 5.dp, vertical = 2.dp))
-        }
-        Row(Modifier.fillMaxWidth().padding(top = 5.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Column { Text("EXTENSÃO", fontSize = 5.sp); Text(order.extension, fontSize = 7.sp, fontWeight = FontWeight.Bold) }
-            Column(horizontalAlignment = Alignment.End) { Text("TIPO", fontSize = 5.sp); Text(order.type, fontSize = 7.sp, fontWeight = FontWeight.Bold) }
-        }
-        if (!order.attended) Button(onClick = onClick, modifier = Modifier.fillMaxWidth().height(17.dp), shape = RoundedCornerShape(2.dp), contentPadding = ButtonDefaults.ContentPadding, colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text("Iniciar Trabalho", fontSize = 8.sp) }
-        else Text("Em andamento", fontSize = 7.sp, modifier = Modifier.align(Alignment.End))
-    }
-}
-
-@Composable
-private fun DetailScreen(order: Order, onBack: () -> Unit, onHistory: () -> Unit, onEvidence: () -> Unit, onStart: () -> Unit, onFinish: () -> Unit) {
-    val context = LocalContext.current
-    Column(Modifier.fillMaxSize()) {
-        AppHeader("Detalhe da ordem", onBack)
-        Column(Modifier.weight(1f).padding(7.dp)) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 7.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column { Text("EXTENSÃO", fontSize = 5.sp); Text(order.extension, fontSize = 8.sp, fontWeight = FontWeight.Bold) }
-                Column(horizontalAlignment = Alignment.End) { Text("${order.status}", color = Color.White, fontSize = 7.sp, modifier = Modifier.background(order.color).padding(4.dp, 2.dp)); Text(if (order.attended) "Em andamento" else "", fontSize = 7.sp) }
-            }
-            InfoBox("TIPO DE ROÇADA", "Apenas manual", Modifier.fillMaxWidth().height(72.dp))
-            Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                InfoBox("EXTENSÃO", "500m", Modifier.weight(1f).height(72.dp))
-                InfoBox("LADO", "NORTE", Modifier.weight(1f).height(72.dp))
-            }
-            if (order.hasEvidence) RoadPreview() else UploadBox(onClick = onEvidence)
-            Button(onClick = {
-                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("geo:0,0?q=Rodovia+SP-021"))
-                if (intent.resolveActivity(context.packageManager) != null) {
-                    context.startActivity(intent)
-                }
-            }, modifier = Modifier.fillMaxWidth().height(32.dp), shape = RoundedCornerShape(2.dp), colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text("Abrir no Maps", fontSize = 10.sp, fontWeight = FontWeight.Bold) }
-            Spacer(Modifier.height(5.dp))
-            OutlinedButton(onClick = if (order.attended) onFinish else onStart, modifier = Modifier.fillMaxWidth().height(32.dp), shape = RoundedCornerShape(2.dp), contentPadding = ButtonDefaults.ContentPadding) { Text(if (order.attended) "Finalizar atendimento" else "Iniciar atendimento", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Black) }
-        }
-        BottomBar(Screen.Orders, onOrders = onBack, onHistory = onHistory)
-    }
-}
-
-@Composable
-private fun InfoBox(label: String, value: String, modifier: Modifier) {
-    Column(modifier.border(1.dp, Border).padding(8.dp), verticalArrangement = Arrangement.Center) {
-        Text(label, fontSize = 7.sp, color = Color.DarkGray, maxLines = 1)
-        Text(value, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
-    }
-}
-
-@Composable
-private fun UploadBox(onClick: () -> Unit) {
-    Box(Modifier.fillMaxWidth().height(69.dp).padding(horizontal = 26.dp, vertical = 12.dp).border(1.dp, Green).clickable { onClick() }, contentAlignment = Alignment.Center) { Text("FAZER UPLOAD", fontSize = 7.sp, fontWeight = FontWeight.Bold) }
-}
-
-@Composable
-private fun RoadPreview() {
-    Canvas(Modifier.fillMaxWidth().height(69.dp).padding(horizontal = 26.dp, vertical = 12.dp)) {
-        drawRect(Color(0xFF75B3D4))
-        drawRect(Color(0xFFB5C879), topLeft = Offset(0f, size.height * .55f), size = androidx.compose.ui.geometry.Size(size.width, size.height * .45f))
-        val road = Path().apply { moveTo(size.width * .35f, size.height); lineTo(size.width * .52f, 0f); lineTo(size.width * .68f, 0f); lineTo(size.width * .9f, size.height); close() }
-        drawPath(road, Color.DarkGray)
-        drawLine(Color.White, Offset(size.width * .58f, 0f), Offset(size.width * .62f, size.height), 2f, StrokeCap.Round)
-        drawLine(Color.White, Offset(size.width * .48f, size.height), Offset(size.width * .54f, 0f), 2f, StrokeCap.Round)
-    }
-}
-
-@Composable
-private fun HistoryScreen(orders: List<Order>, onOrders: () -> Unit) {
-    Column(Modifier.fillMaxSize()) {
-        AppHeader("Histórico")
-        Column(Modifier.weight(1f).padding(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            orders.forEach { order ->
-                Column(Modifier.fillMaxWidth().height(62.dp).border(1.dp, Border).padding(4.dp)) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Column { Text("RODOVIA", fontSize = 7.sp); Text("SP-021", fontSize = 12.sp, fontWeight = FontWeight.Bold) }; Text("FEITO", color = Color.White, fontSize = 7.sp, modifier = Modifier.background(Green).padding(horizontal = 10.dp, vertical = 2.dp)) }
-                    Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) { Column { Text("EXTENSÃO", fontSize = 5.sp); Text(order.extension, fontSize = 7.sp, fontWeight = FontWeight.Bold) }; Column(horizontalAlignment = Alignment.End) { Text("TIPO", fontSize = 5.sp); Text(order.type, fontSize = 7.sp, fontWeight = FontWeight.Bold) } }
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        val container = (application as CultivaApp).container
+        setContent {
+            MaterialTheme {
+                Surface(
+                    Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.navigationBars),
+                    color = Paper
+                ) {
+                    CultivaNavGraph(container)
                 }
             }
         }
-        BottomBar(Screen.History, onOrders = onOrders, onHistory = {})
     }
 }
